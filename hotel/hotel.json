@@ -1,0 +1,47 @@
+[
+    {
+        "local": "Curitiba",
+        "data": "21/12/2018",
+        "quartos": 27
+    },
+    {
+        "local": "Curitiba",
+        "data": "22/12/2018",
+        "quartos": 30
+    },
+    {
+        "local": "Curitiba",
+        "data": "23/12/2018",
+        "quartos": 30
+    },
+    {
+        "local": "Curitiba",
+        "data": "24/12/2018",
+        "quartos": 30
+    },
+    {
+        "local": "Ourinhos",
+        "data": "22/12/2018",
+        "quartos": 30
+    },
+    {
+        "local": "Ourinhos",
+        "data": "21/12/2018",
+        "quartos": 30
+    },
+    {
+        "local": "Campinas",
+        "data": "23/12/2018",
+        "quartos": 30
+    },
+    {
+        "local": "Campinas",
+        "data": "24/12/2018",
+        "quartos": 30
+    },
+    {
+        "local": "Campinas",
+        "data": "25/12/2018",
+        "quartos": 30
+    }
+]

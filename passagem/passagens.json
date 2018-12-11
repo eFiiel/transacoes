@@ -1,0 +1,38 @@
+[
+    {
+        "origem": "Curitiba",
+        "destino": "Ourinhos",
+        "data": "22/12/2018",
+        "vagas": 27
+    },
+    {
+        "origem": "Curitiba",
+        "destino": "Ourinhos",
+        "data": "25/12/2018",
+        "vagas": 30
+    },
+    {
+        "origem": "Ourinhos",
+        "destino": "Curitiba",
+        "data": "21/12/2018",
+        "vagas": 27
+    },
+    {
+        "origem": "Curitiba",
+        "destino": "Campinas",
+        "data": "23/12/2018",
+        "vagas": 30
+    },
+    {
+        "origem": "Campinas",
+        "destino": "Curitiba",
+        "data": "24/12/2018",
+        "vagas": 30
+    },
+    {
+        "origem": "Curitiba",
+        "destino": "Sao Paulo",
+        "data": "28/12/2018",
+        "vagas": 30
+    }
+]
