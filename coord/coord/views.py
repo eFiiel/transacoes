@@ -5,7 +5,7 @@ import requests
 from datetime import datetime
 import json
 import sys
-sys.path.append("/home/ewerton.fiel/Dropbox/codes/transacoes")
+sys.path.append("/home/efiiel/Dropbox/transactions")
 import Transacoes
 
 class Status:
@@ -14,81 +14,12 @@ class Status:
     Aborted = 3
 
 
-"""
-class Transaction:
-    idCounter = 0
-
-    def __init__(self, timestamp, status, content, uid=None):
-        
-        if uid == None:
-            self.id = Transaction.idCounter
-            Transaction.idCounter += 1
-        else:
-            self.id = uid
-        self.timestamp = timestamp
-        self.status = status
-        self.content = content
-
-        try:
-            with open('transactions.log', "r") as f:
-                pass
-        except FileNotFoundError:
-            with open('transactions.log', "w+") as f:
-                f.write("{}")
-
-    def getTrans(self):
-        return {
-            'id': self.id,
-            'timestamp': self.timestamp,
-            'status': self.status,
-            'content': self.content
-        }
-
-    def log(self):
-        with open('transactions.log', "r") as log:
-            temp = json.load(log)
-
-        temp[self.id] = self.getTrans()
-        with open('transactions.log', 'w') as log:
-            log.write(json.dumps(temp, indent=4))
-
-    def desejaEfetivar(self):
-
-        paramsHosps = {
-            'ct': self.content['dst'],
-            'qts': self.content['qts'],
-            'ent': self.content['ida'],
-            'sai': self.content['volta'],
-            'trans': self
-        }
-        paramsPassagem = {
-            'org':self.content['org'],
-            'dst': self.content['dst'],
-            'qtd': self.content['qtd'],
-            'ida': self.content['ida'],
-            'volta': self.content['volta'],
-            'trans': self
-
-        }
-
-        ticks = requests.get("http://localhost:9000/rcvTrans", params=paramsPassagem).json()
-        room = requests.get("http://localhost:8500/rcvTrans", params=paramsHosps).json()
-        if not (ticks == [] or room == []):
-            return ticks.extend(room)
-        else:
-            return False
-
-    def respond(self):
-        if self.status == Status.Done:
-            ticks = requests.get("http://localhost:9000/done")
-            hosps = requests.get("http://localhost:8500/done")
-        elif self.status == Status.Aborted:
-            ticks = requests.get("http://localhost:9000/abort")
-            hosps = requests.get("http://localhost:8500/abort")
-"""
-
-
 def CPpassagens(request):
+    """
+
+    :param request: Requisição recebida via WebService
+    :return: Uma lista contendo os objetos encontrados
+    """
     if request.method == 'GET':
         params = {
             'org': request.GET.get('org', None).rstrip("\n"),
@@ -104,6 +35,11 @@ def CPpassagens(request):
 
 
 def LSpassagens(request):
+    """
+
+    :param request: Requisição recebida via WebService
+    :return: Uma lista contendo todos os objetos da base de dados
+    """
     if request.method == 'GET':
         response = requests.get("http://localhost:9000/LSpassagens/")
         return jr(response.json(), safe=False)
@@ -112,6 +48,11 @@ def LSpassagens(request):
 
 
 def CPhosps(request):
+    """
+
+    :param request: Requisição recebida via WebService
+    :return: Uma lista contendo os objetos encontrados
+    """
     if request.method == 'GET':
         params = {
             'ct': request.GET.get('city', None).rstrip("\n"),
@@ -127,6 +68,11 @@ def CPhosps(request):
 
 
 def LShosps(request):
+    """
+
+    :param request: Requisição recebida via WebService
+    :return: Uma lista contendo todos os objetos da base de dados
+    """
     if request.method == 'GET':
         response = requests.get("http://localhost:8500/LShospedagens/")
         return jr(response.json(), safe=False)
@@ -135,6 +81,11 @@ def LShosps(request):
 
 
 def CPpcks(request):
+    """
+    Método que instancia transação para realizar a busca de um pacote
+    :param request:  Requisição recebida via WebService
+    :return:
+    """
     if request.method == 'GET':
         global rooms
         global tickets
@@ -160,6 +111,7 @@ def CPpcks(request):
             'ida': ent,
             'volta': sai
         }
+        # transação criada
         trans = Transacoes.Transaction(datetime.now().timestamp(), Status.Active, content)
         trans.log()
         ans = trans.desejaEfetivar()

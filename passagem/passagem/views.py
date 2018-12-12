@@ -6,10 +6,8 @@ import requests
 from datetime import datetime
 import os
 import sys
-sys.path.append("/home/ewerton.fiel/Dropbox/codes/transacoes")
+sys.path.append("/home/efiiel/Dropbox/transactions")
 import Transacoes
-
-atual=None
 
 
 class Status:
@@ -18,84 +16,21 @@ class Status:
     Aborted = 3
 
 
-"""
-class Transaction:
-    idCounter = 0
-
-    def __init__(self, timestamp, status, content, uid=None):
-        
-
-        
-        if uid == None:
-            self.id = Transaction.idCounter
-            Transaction.idCounter += 1
-        else:
-            self.id = uid
-        self.timestamp = timestamp
-        self.status = status
-        self.content = content
-
-        try:
-            with open('transactions.log', "r") as f:
-                pass
-        except FileNotFoundError:
-            with open('transactions.log', "w+") as f:
-                f.write("{}")
-
-    def getTrans(self):
-        return {
-            'id': self.id,
-            'timestamp': self.timestamp,
-            'status': self.status,
-            'content': self.content
-        }
-
-    def log(self):
-        with open('transactions.log', "r") as log:
-            temp = json.load(log)
-
-        temp[self.id] = self.getTrans()
-        with open('transactions.log', 'w') as log:
-            log.write(json.dumps(temp, indent=4))
-
-    def desejaEfetivar(self):
-
-        paramsHosps = {
-            'ct': self.content['dst'],
-            'qts': self.content['qts'],
-            'ent': self.content['ida'],
-            'sai': self.content['volta'],
-            'trans': self
-        }
-        paramsPassagem = {
-            'org':self.content['org'],
-            'dst': self.content['dst'],
-            'qtd': self.content['qtd'],
-            'ida': self.content['ida'],
-            'volta': self.content['volta'],
-            'trans': self
-
-        }
-
-        ticks = requests.get("http://localhost:9000/rcvTrans", params=paramsPassagem).json()
-        room = requests.get("http://localhost:8500/rcvTrans", params=paramsHosps).json()
-        if not (ticks == [] or room == []):
-            return ticks.extend(room)
-        else:
-            return False
-
-    def respond(self):
-        if self.status == Status.Done:
-            ticks = requests.get("http://localhost:9000/done")
-            hosps = requests.get("http://localhost:8500/done")
-        elif self.status == Status.Aborted:
-            ticks = requests.get("http://localhost:9000/abort")
-            hosps = requests.get("http://localhost:8500/abort")
-"""
-
 def compraPass(org, dst, qtd, ida, tipo, volta=None):
+    """
+
+    :param org: Cidade de origem
+    :param dst: Cidade de Destino
+    :param qtd: Quantidade de Passagens
+    :param ida: Data de Ida
+    :param tipo: Tipo da compra: Passagem ou Pacote
+    :param volta: Data da volta, se existente
+    :return: Lista contendo as passagens compradas, se encontradas, senão apenas uma lista vazia
+    """
+    # coleta os dados de passagens
     with open('passagens.json') as f:
         tickets = json.load(f)
+    #flags de confirmação
     idaFlag = False
     voltaFlag = False
     out = []
@@ -103,15 +38,18 @@ def compraPass(org, dst, qtd, ida, tipo, volta=None):
         file = 'passagens.json'
     if tipo == 2:
         file = 'passagens.json.temp'
+    # Verificação da existencia da passagem
     for i in tickets:
         if i['origem'].casefold() == org.casefold() and not idaFlag:
             if i['destino'].casefold() == dst.casefold():
                 if int(i['vagas']) > int(qtd):
                     if i['data'] == ida:
                         i['vagas'] -= int(qtd)
+                        # adiciona a passgem encontrada em uma lista
                         out.append(i)
                         idaFlag = True
                         continue
+    # Verifica a existencia da passagem de volta
     if volta and idaFlag:
         for i in tickets:
             if i['origem'].casefold() == dst.casefold() and not voltaFlag:
@@ -119,8 +57,11 @@ def compraPass(org, dst, qtd, ida, tipo, volta=None):
                     if int(i['vagas']) > int(qtd):
                         if i['data'] == volta:
                             i['vagas'] -= int(qtd)
+                            # adiciona a passgem encontrada em uma lista
                             out.append(i)
                             voltaFlag = True
+
+                            # Atualiza o arquivo
                             with open(file, 'w+') as file:
                                 json.dump(tickets, file, indent=4)
                             return out
@@ -128,10 +69,16 @@ def compraPass(org, dst, qtd, ida, tipo, volta=None):
         out = []
     with open(file, 'w+') as file:
         json.dump(tickets, file, indent=4)
+    # retorna a lista com a resposta
     return out
 
 
 def CPpassagens(request):
+    """
+
+    :param request: Requisição recebida via WebService
+    :return: Uma lista contendo os objetos encontrados
+    """
     if request.method == 'GET':
         org = request.GET.get('org', None)
         dst = request.GET.get('dst', None)
@@ -147,6 +94,11 @@ def CPpassagens(request):
 
 
 def LSpassagens(request):
+    """
+
+    :param request: Requisição recebida via WebService
+    :return: Uma lista contendo todos os objetos da base de dados
+    """
     if request.method == 'GET':
         with open("passagens.json") as file:
             tickets = json.load(file)
@@ -156,6 +108,12 @@ def LSpassagens(request):
 
 
 def rcvTrans(request):
+    """
+    Método que recebe a transação contendo a requisição para do servidor coordenador
+    :param request: Requisição recebida via WebService
+    :return:    Lista representando a resposta do pedido de transação,
+                Lista vazia para Não e Lista preenchida pra Sim
+    """
     if request.method == 'GET':
         global atual
         org = request.GET.get('org', None).rstrip("\n")
@@ -179,14 +137,21 @@ def rcvTrans(request):
         result = compraPass(org, dst, qtd, ida, 2, volta)
         if not result == []:
             trans.status = Status.Done
+        else:
+            trans.status = Status.Aborted
+
         trans.log()
-        atual = trans
         return jr(result, safe=False)
     else:
         return rp('The method must be Get!')
 
 
 def done(request):
+    """
+    Método que recebe a confirmação de efetivação da transação
+    :param request: Requisição recebida via WebService
+    :return: None
+    """
     if request.method == 'GET':
         with open("passagens.json.temp", 'r') as file:
             tickets = json.load(file)
@@ -199,6 +164,11 @@ def done(request):
 
 
 def abort(request):
+    """
+    Método que recebe
+    :param request: Requisição recebida via WebService
+    :return:
+    """
     if request.method == 'GET':
         os.remove("passagens.json.temp")
         atual.status = Status.Aborted

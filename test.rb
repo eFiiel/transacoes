@@ -6,7 +6,7 @@ require "pp"
 require "io/console"
 
 
-
+# Interface de Menu para o cliente
 def menu
   system("clear")
   puts("     Bem Vindo a Furst&Fiel\r")
@@ -71,7 +71,7 @@ def getTipo
   gets
 end
 
-
+# Requisição para a compra de passagens
 def buy_ticks
   puts("Digite sua origem: ")
   origem = gets
@@ -128,7 +128,7 @@ def buy_ticks
 
 end
 
-
+# Requisição para a listagem de passagens
 def list_ticks
   puts("\n\nPassagens Aéreas:   \n\n")
   response = Faraday.new "http://127.0.0.1:8000/LSpassagens/"
@@ -143,7 +143,7 @@ def list_ticks
 
 end
 
-
+# Requisição para a listagem de hotéis
 def list_hotel
   response = Faraday.new "http://127.0.0.1:8000/LShospedagens/"
   vetor =JSON.parse(response.get.body)
@@ -155,7 +155,7 @@ def list_hotel
   end
 end
 
-
+# Requisição para a reserva de quartos
 def buy_hotel
   puts("Cidade: ")
   cidade = gets
@@ -193,7 +193,7 @@ def buy_hotel
 
 end
 
-
+# Requisição para a compra de pacotes
 def buy_packs
   puts("Origem: ")
   org = gets

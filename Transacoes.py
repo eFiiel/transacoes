@@ -20,11 +20,13 @@ class Transaction:
         :type uid: int
         :param timestamp: momento de criação da transação
         :type timestamp: float
-        :param status:
+        :param status: status que a transação se encontra
         :type status: int
-        :param content:
+        :param content: conteúdo da requisição da transação
         :type content: dict
         """
+
+        # caso o uid seja recebido, reinstância uma transação, caso não seja, cria um nova
         if uid == None:
             self.id = Transaction.idCounter
             Transaction.idCounter += 1
@@ -42,6 +44,10 @@ class Transaction:
                 f.write("{}")
 
     def getTrans(self):
+        """
+
+        :return: Dict Obj com as informações da transação
+        """
         return {
             'id': self.id,
             'timestamp': self.timestamp,
@@ -50,45 +56,39 @@ class Transaction:
         }
 
     def log(self):
+        """
+        Realiza a escrita do log da transação
+        :return: None
+        """
         with open('transactions.log', "r") as log:
             temp = json.load(log)
-
+        self.timestamp = datetime.now().timestamp()
         temp[self.id] = self.getTrans()
         with open('transactions.log', 'w') as log:
             log.write(json.dumps(temp, indent=4))
 
     def desejaEfetivar(self):
         """
-        paramsHosps = {
-            'ct': self.content['dst'],
-            'qts': self.content['qts'],
-            'ent': self.content['ida'],
-            'sai': self.content['volta'],
-            'trans': self
-        }
-        paramsPassagem = {
-            'org':self.content['org'],
-            'dst': self.content['dst'],
-            'qtd': self.content['qtd'],
-            'ida': self.content['ida'],
-            'volta': self.content['volta'],
-            'id': self.id,
 
-
-        }
+        :return: Lista contendo os objetos encontrados, caso encontrados, senão, lista vazia
         """
+
         params = self.content.copy()
         params['id'] = self.id
 
         ticks = requests.get("http://localhost:9000/rcvTrans", params=params).json()
         room = requests.get("http://localhost:8500/rcvTrans", params=params).json()
-        print(ticks+room)
+        #print(ticks+room)
         if not (ticks == [] or room == []):
             return ticks + room
         else:
             return []
 
     def respond(self):
+        """
+        Responde aos servidores participantes se a transação foi efetivada ou não
+        :return:
+        """
         if self.status == Status.Done:
             ticks = requests.get("http://localhost:9000/done")
             hosps = requests.get("http://localhost:8500/done")
