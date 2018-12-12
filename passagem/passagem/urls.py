@@ -21,5 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('CPpassagens/', views.CPpassagens),
     path('LSpassagens/', views.LSpassagens),
+    path('CPpassagens/', views.CPpassagens),
+    path('LSpassagens/', views.LSpassagens),
 
 ]
