@@ -223,31 +223,31 @@ def buy_packs
 
   end
   vetor = JSON.parse(vetor.body)
-  if vetor == []
-    puts "\n\nItens não encontrados"
-  else
-    puts "\n\nItens comprados:\n"
-  end
-  for i in vetor
-    if i['destino']
-      puts "Destino:         " + i['destino']
-    end
-    if i['origem']
-      puts "Origem:          " + i['origem']
-    end
-    if i['local']
-      puts "Cidade:          " + i['local']
-    end
-    if i['quartos']
-      puts "Nº de quartos:   " + String(i['quartos'])
-    end
-    if i['vagas']
-      puts "Nº de pessoas:   " + String(i['vagas'])
-    end
-    if i['data']
-      puts "Data:            " + i['data'] + "\n\n"
-    end
 
+  if not vetor == [] and vetor
+    puts "\n\nItens comprados:\n"
+    for i in vetor
+      if i['origem']
+        puts "Origem:          " + i['origem']
+      end
+      if i['destino']
+        puts "Destino:         " + i['destino']
+      end
+      if i['local']
+        puts "Cidade:          " + i['local']
+      end
+      if i['quartos']
+        puts "Nº de quartos:   " + String(i['quartos'])
+      end
+      if i['vagas']
+        puts "Nº de pessoas:   " + String(i['vagas'])
+      end
+      if i['data']
+      puts "Data:            " + i['data'] + "\n\n"
+      end
+    end
+  else
+    puts "\n\nItens não encontrados"
   end
 end
 

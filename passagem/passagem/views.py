@@ -5,8 +5,12 @@ import copy
 import requests
 from datetime import datetime
 import os
+import sys
+sys.path.append("/home/ewerton.fiel/Dropbox/codes/transacoes")
+import Transacoes
 
 atual=None
+
 
 class Status:
     Active = 1
@@ -14,21 +18,14 @@ class Status:
     Aborted = 3
 
 
+"""
 class Transaction:
     idCounter = 0
 
     def __init__(self, timestamp, status, content, uid=None):
-        """
+        
 
-        :param uid: id da transação
-        :type uid: int
-        :param timestamp: momento de criação da transação
-        :type timestamp: float
-        :param status:
-        :type status: int
-        :param content:
-        :type content: dict
-        """
+        
         if uid == None:
             self.id = Transaction.idCounter
             Transaction.idCounter += 1
@@ -56,13 +53,13 @@ class Transaction:
     def log(self):
         with open('transactions.log', "r") as log:
             temp = json.load(log)
-        self.timestamp = datetime.now().timestamp()
+
         temp[self.id] = self.getTrans()
         with open('transactions.log', 'w') as log:
             log.write(json.dumps(temp, indent=4))
 
     def desejaEfetivar(self):
-        paramsPassagem = self.content.pop('qts')
+
         paramsHosps = {
             'ct': self.content['dst'],
             'qts': self.content['qts'],
@@ -70,10 +67,31 @@ class Transaction:
             'sai': self.content['volta'],
             'trans': self
         }
+        paramsPassagem = {
+            'org':self.content['org'],
+            'dst': self.content['dst'],
+            'qtd': self.content['qtd'],
+            'ida': self.content['ida'],
+            'volta': self.content['volta'],
+            'trans': self
 
-        ticks = requests.get("http://localhost:9000/rcvTrans", params=paramsPassagem)
-        rooms = requests.get("http://localhost:8500/rcvTrans", params=paramsHosps)
+        }
 
+        ticks = requests.get("http://localhost:9000/rcvTrans", params=paramsPassagem).json()
+        room = requests.get("http://localhost:8500/rcvTrans", params=paramsHosps).json()
+        if not (ticks == [] or room == []):
+            return ticks.extend(room)
+        else:
+            return False
+
+    def respond(self):
+        if self.status == Status.Done:
+            ticks = requests.get("http://localhost:9000/done")
+            hosps = requests.get("http://localhost:8500/done")
+        elif self.status == Status.Aborted:
+            ticks = requests.get("http://localhost:9000/abort")
+            hosps = requests.get("http://localhost:8500/abort")
+"""
 
 def compraPass(org, dst, qtd, ida, tipo, volta=None):
     with open('passagens.json') as f:
@@ -106,6 +124,8 @@ def compraPass(org, dst, qtd, ida, tipo, volta=None):
                             with open(file, 'w+') as file:
                                 json.dump(tickets, file, indent=4)
                             return out
+    if volta and not voltaFlag:
+        out = []
     with open(file, 'w+') as file:
         json.dump(tickets, file, indent=4)
     return out
@@ -140,11 +160,22 @@ def rcvTrans(request):
         global atual
         org = request.GET.get('org', None).rstrip("\n")
         dst = request.GET.get('dst', None).rstrip("\n")
-        qtd = request.GET.get('qtd', None).rstrip("\n")
+        qtd = int(request.GET.get('qtd', None).rstrip("\n"))
         ida = request.GET.get('ida', None).rstrip("\n")
         volta = request.GET.get('volta', None).rstrip("\n")
-        trans = request.GET.get('trans', None)  # type:Transaction
+        qts = int(request.GET.get('qts', None).rstrip("\n"))
+        uid = int(request.GET.get('id', None))
+        content = {
+            'org': org,
+            'dst': dst,
+            'qts': qts,
+            'qtd': qtd,
+            'ida': ida,
+            'volta': volta
+        }
 
+        trans = Transacoes.Transaction(datetime.now().timestamp(), Status.Active, content, uid)
+        trans.log()
         result = compraPass(org, dst, qtd, ida, 2, volta)
         if not result == []:
             trans.status = Status.Done
@@ -163,6 +194,7 @@ def done(request):
         atual.log()
         with open("passagens.json", 'w') as file:
             file.write(json.dumps(tickets, indent=4))
+        os.remove("passagens.json.temp")
         return rp("Ok")
 
 

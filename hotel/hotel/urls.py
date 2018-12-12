@@ -21,5 +21,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('CPhospedagens/', views.CPhosps),
     path('LShospedagens/', views.LShosps),
+    path('rcvTrans/', views.rcvTrans),
+    path('done/', views.done),
+    path('abort/', views.abort),
 
 ]

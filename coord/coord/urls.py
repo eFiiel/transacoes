@@ -23,4 +23,5 @@ urlpatterns = [
     path('LSpassagens/', views.LSpassagens),
     path('CPhospedagens/', views.CPhosps),
     path('LShospedagens/', views.LShosps),
+    path('CPpacotes/', views.CPpcks),
 ]

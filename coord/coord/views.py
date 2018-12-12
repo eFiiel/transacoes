@@ -4,7 +4,9 @@ import copy
 import requests
 from datetime import datetime
 import json
-
+import sys
+sys.path.append("/home/ewerton.fiel/Dropbox/codes/transacoes")
+import Transacoes
 
 class Status:
     Active = 1
@@ -12,21 +14,12 @@ class Status:
     Aborted = 3
 
 
+"""
 class Transaction:
     idCounter = 0
 
     def __init__(self, timestamp, status, content, uid=None):
-        """
-
-        :param uid: id da transação
-        :type uid: int
-        :param timestamp: momento de criação da transação
-        :type timestamp: float
-        :param status:
-        :type status: int
-        :param content:
-        :type content: dict
-        """
+        
         if uid == None:
             self.id = Transaction.idCounter
             Transaction.idCounter += 1
@@ -60,13 +53,22 @@ class Transaction:
             log.write(json.dumps(temp, indent=4))
 
     def desejaEfetivar(self):
-        paramsPassagem = self.content.pop('qts')
+
         paramsHosps = {
             'ct': self.content['dst'],
             'qts': self.content['qts'],
             'ent': self.content['ida'],
             'sai': self.content['volta'],
             'trans': self
+        }
+        paramsPassagem = {
+            'org':self.content['org'],
+            'dst': self.content['dst'],
+            'qtd': self.content['qtd'],
+            'ida': self.content['ida'],
+            'volta': self.content['volta'],
+            'trans': self
+
         }
 
         ticks = requests.get("http://localhost:9000/rcvTrans", params=paramsPassagem).json()
@@ -83,8 +85,7 @@ class Transaction:
         elif self.status == Status.Aborted:
             ticks = requests.get("http://localhost:9000/abort")
             hosps = requests.get("http://localhost:8500/abort")
-
-
+"""
 
 
 def CPpassagens(request):
@@ -141,12 +142,15 @@ def CPpcks(request):
         voltaFlag = False
         gotHotel = False
         gotTicket = False
-        org = request.GET.get('org', None).rstrip("\n")
-        dst = request.GET.get('dst', None).rstrip("\n")
-        qts = int(request.GET.get('qts', None).rstrip("\n"))
-        pep = int(request.GET.get('people', None).rstrip("\n"))
-        ent = request.GET.get('ida', None).rstrip("\n")
-        sai = request.GET.get('volta', None).rstrip("\n")
+        try:
+            org = request.GET.get('org', None).rstrip("\n")
+            dst = request.GET.get('dst', None).rstrip("\n")
+            qts = int(request.GET.get('qts', None).rstrip("\n"))
+            pep = int(request.GET.get('people', None).rstrip("\n"))
+            ent = request.GET.get('ida', None).rstrip("\n")
+            sai = request.GET.get('volta', None).rstrip("\n")
+        except:
+            return jr([], safe=False)
         out = []
         content ={
             'org': org,
@@ -156,69 +160,18 @@ def CPpcks(request):
             'ida': ent,
             'volta': sai
         }
-        trans = Transaction(datetime.now().timestamp(), Status.Active, content)
+        trans = Transacoes.Transaction(datetime.now().timestamp(), Status.Active, content)
         trans.log()
         ans = trans.desejaEfetivar()
-        if ans:
+        if not ans == []:
             trans.status = Status.Done
         else:
             trans.status = Status.Aborted
         trans.log()
         trans.respond()
 
-        diaent = int(ent.split("/")[0])
-        diasai = int(sai.split("/")[0])
-
-        for i in range(diaent, diasai, 1):
-            temp = copy.deepcopy(rooms)
-            print("Dps", temp[0])
-            found = False
-            auxd = ent.replace(str(diaent), str(i))
-            for j in rooms:
-                if j['local'] == dst:
-                    if j['data'] == auxd:
-                        if j['quartos'] >= qts:
-                            out.append(j)
-                            j['quartos'] -= qts
-                            found = True
-                            break
-            if not found:
-                print("Rooms", rooms[0])
-                out = []
-                break
-        if not found:
-            print("resetou")
-            rooms = copy.deepcopy(temp)
-            return jr([], safe=False)
-        else:
-            print('pegou hotel')
-            gotHotel = True
-
-        for i in tickets:
-            if i['origem'].casefold() == org.casefold() and not idaFlag:
-                if i['destino'].casefold() == dst.casefold():
-                    if int(i['vagas']) > int(pep):
-                        if i['data'] == ent:
-                            i['vagas'] -= int(pep)
-                            out.append(i)
-                            print('pegou ida')
-                            idaFlag = True
-                            continue
-        if sai and idaFlag:
-            for i in tickets:
-                if i['origem'].casefold() == dst.casefold() and not voltaFlag:
-                    if i['destino'].casefold() == org.casefold():
-                        if int(i['vagas']) > int(pep):
-                            if i['data'] == sai:
-                                i['vagas'] -= int(pep)
-                                out.append(i)
-                                print('pegou volta')
-                                voltaFlag = True
-                                break
-        if idaFlag and voltaFlag:
-            gotTicket = True
-        if not (gotHotel and gotTicket):
-            out = []
-        return jr(out, safe=False)
+        print(ans)
+        #out = []
+        return jr(ans, safe=False)
     else:
         return rp('The method must be Get!')
